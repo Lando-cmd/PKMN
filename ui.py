@@ -6,7 +6,7 @@ from inventory_manager import InventoryManager
 class InventoryApp:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Goldstar Collectables Inventory System")
+        self.root.title("Enterprise Inventory System")
         self.root.geometry("800x600")
         self.root.resizable(False, False)
 
@@ -15,15 +15,16 @@ class InventoryApp:
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(expand=1, fill="both")
 
-        # Create the inventory and sold tabs
+        # Create the inventory, sold, and full inventory tabs
         self.create_inventory_tab()
         self.create_sold_tab()
+        self.create_full_inventory_tab()
 
     def create_inventory_tab(self):
         inventory_frame = ttk.Frame(self.notebook)
-        self.notebook.add(inventory_frame, text="Acquired")
+        self.notebook.add(inventory_frame, text="Inventory")
 
-        ttk.Label(inventory_frame, text="King's Foreskin", font=("Helvetica", 40, "bold")).pack(pady=10)
+        ttk.Label(inventory_frame, text="Inventory Management", font=("Helvetica", 16, "bold")).pack(pady=10)
 
         # Search Bar
         search_frame = ttk.Frame(inventory_frame)
@@ -92,6 +93,28 @@ class InventoryApp:
         ttk.Button(button_frame, text="Undo Sale", command=self.undo_sale).pack(side="left", padx=5)
         ttk.Button(button_frame, text="Delete", command=self.delete_sold_item).pack(side="left", padx=5)
 
+    def create_full_inventory_tab(self):
+        full_inventory_frame = ttk.Frame(self.notebook)
+        self.notebook.add(full_inventory_frame, text="Full Inventory")
+
+        ttk.Label(full_inventory_frame, text="Full Inventory View", font=("Helvetica", 16, "bold")).pack(pady=10)
+
+        # Treeview for displaying the full inventory
+        columns = ("ID", "Name", "Condition", "Card Number", "Barcode")
+        self.full_inventory_tree = ttk.Treeview(full_inventory_frame, columns=columns, show="headings", height=20)
+        self.full_inventory_tree.pack(fill="both", expand=True, padx=20, pady=10)
+
+        # Define column headings
+        for col in columns:
+            self.full_inventory_tree.heading(col, text=col)
+            self.full_inventory_tree.column(col, anchor="center")
+
+        # Refresh button to update the inventory view
+        ttk.Button(full_inventory_frame, text="Refresh", command=self.update_full_inventory).pack(pady=10)
+
+        # Initial population of the inventory
+        self.update_full_inventory()
+
     def add_inventory_item(self):
         name = self.name_entry.get().strip()
         condition = self.condition_entry.get().strip()
@@ -103,6 +126,7 @@ class InventoryApp:
 
         self.inventory_manager.add_card(name, condition, card_number)
         self.update_inventory_list()
+        self.update_full_inventory()
 
         self.name_entry.delete(0, tk.END)
         self.condition_entry.delete(0, tk.END)
@@ -157,6 +181,7 @@ class InventoryApp:
             self.inventory_manager.edit_card(card_id, name, condition, card_number)
             edit_window.destroy()
             self.update_inventory_list()
+            self.update_full_inventory()
 
         ttk.Button(edit_window, text="Save", command=save_changes).grid(row=3, column=0, columnspan=2, pady=10)
 
@@ -171,6 +196,7 @@ class InventoryApp:
         if confirm:
             self.inventory_manager.delete_inventory_item(card_id)
             self.update_inventory_list()
+            self.update_full_inventory()
 
     def sell_card(self):
         selected = self.inventory_list.curselection()
@@ -186,6 +212,7 @@ class InventoryApp:
 
         self.inventory_manager.sell_card(card_id, sell_price)
         self.update_inventory_list()
+        self.update_full_inventory()
         self.update_sold_list()
 
     def undo_sale(self):
@@ -197,6 +224,7 @@ class InventoryApp:
         card_id = self.get_selected_card_id(self.sold_list, selected[0])
         self.inventory_manager.undo_sale(card_id)
         self.update_inventory_list()
+        self.update_full_inventory()
         self.update_sold_list()
 
     def delete_sold_item(self):
@@ -214,6 +242,18 @@ class InventoryApp:
     def update_inventory_list(self):
         inventory = self.inventory_manager.get_inventory()
         self.update_listbox(self.inventory_list, inventory)
+
+    def update_full_inventory(self):
+        # Clear the Treeview
+        for item in self.full_inventory_tree.get_children():
+            self.full_inventory_tree.delete(item)
+
+        # Populate the Treeview with inventory data
+        inventory = self.inventory_manager.get_inventory()
+        for card in inventory:
+            self.full_inventory_tree.insert(
+                "", "end", values=(card["id"], card["name"], card["condition"], card["card_number"], card["barcode"])
+            )
 
     def update_sold_list(self):
         sold_cards = self.inventory_manager.get_sold_cards()
