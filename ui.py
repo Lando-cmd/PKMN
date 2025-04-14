@@ -7,7 +7,7 @@ class InventoryApp:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Enterprise Inventory System")
-        self.root.geometry("1000x600")
+        self.root.geometry("1000x800")
         self.root.resizable(False, False)
 
         self.inventory_manager = InventoryManager()
