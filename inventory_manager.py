@@ -35,13 +35,14 @@ class InventoryManager:
             """)
 
     def add_card(self, name, condition, card_number):
-        barcode = generate_barcode()
+        # Pass the name and condition to generate_barcode
+        barcode, _ = generate_barcode(name, condition)  # Extract barcode number from tuple
         date_added = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with self.connection:
             self.connection.execute("""
                 INSERT INTO inventory (name, condition, card_number, barcode, date_added)
                 VALUES (?, ?, ?, ?, ?)
-            """, (name, condition, card_number, barcode, date_added))
+            """, (name, condition, card_number, barcode, date_added))  # Pass only the barcode number
 
     def get_inventory(self):
         with self.connection:
