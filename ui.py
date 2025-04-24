@@ -126,6 +126,18 @@ class InventoryApp:
             self.full_inventory_tree.heading(col, text=col)
             self.full_inventory_tree.column(col, anchor="center")
 
+        # Button Frame for actions
+        button_frame = ttk.Frame(full_inventory_frame)
+        button_frame.pack(fill="x", padx=20, pady=10)
+
+        # Add Delete Card Button
+        ttk.Button(button_frame, text="Delete Card", command=self.delete_selected_card_full_inventory).pack(side="right",
+                                                                                                            padx=5)
+
+        # Add Sell Card Button
+        ttk.Button(button_frame, text="Sell Card", command=self.sell_selected_card_full_inventory).pack(side="left",
+                                                                                                        padx=5)
+
         # Refresh button to update the inventory view
         ttk.Button(full_inventory_frame, text="Refresh", command=self.update_full_inventory).pack(pady=10)
 
@@ -237,6 +249,33 @@ class InventoryApp:
         self.update_inventory_list()
         self.update_full_inventory()
         self.update_sold_list()
+
+    def delete_selected_card_full_inventory(self):
+        selected_item = self.full_inventory_tree.selection()
+        if not selected_item:
+            messagebox.showerror("Error", "No card selected!")
+            return
+
+
+        card_id = self.full_inventory_tree.item(selected_item[0], "values")[0]
+        confirm = messagebox.askyesno("Confirm Deletion", "Are you sure you want to delete this item?")
+        if confirm:
+            self.inventory_manager.delete_inventory_item(card_id)
+            self.update_full_inventory()
+
+    def sell_selected_card_full_inventory(self):
+        selected_item = self.full_inventory_tree.selection()
+        if not selected_item:
+            messagebox.showerror("Error", "No card selected!")
+            return
+
+        card_id = self.full_inventory_tree.item(selected_item[0], "values")[0]
+        sell_price = simpledialog.askfloat("Sell Card", "Enter selling price:")
+        if sell_price is None:
+            return
+
+        self.inventory_manager.sell_card(card_id, sell_price)
+        self.update_full_inventory()
 
     def search_sold_cards(self):
         query = self.search_sold_entry.get().strip()  # Get the search query from the entry field
