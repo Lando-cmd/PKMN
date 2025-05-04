@@ -29,7 +29,7 @@ class InventoryApp:
         inventory_frame = ttk.Frame(self.notebook)
         self.notebook.add(inventory_frame, text="Inventory")
 
-        ttk.Label(inventory_frame, text="Inventory Management", font=("Helvetica", 16, "bold")).pack(pady=10)
+        ttk.Label(inventory_frame, text="King's Foreskin", font=("Helvetica", 30, "bold")).pack(pady=10)
 
         # Search Bar
         search_frame = ttk.Frame(inventory_frame)
@@ -93,10 +93,19 @@ class InventoryApp:
         self.sold_tree = ttk.Treeview(sold_frame, columns=columns, show="headings", height=20)
         self.sold_tree.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Define column headings
+        # Define column headings and set widths
         for col in columns:
+            column_widths = {
+                "ID": 10,
+                "Name": 150,
+                "Condition": 100,
+                "Card Number": 120,
+                "Sell Price": 100,
+                "Date of Sale": 150,
+                "Barcode": 120,
+            }
             self.sold_tree.heading(col, text=col)
-            self.sold_tree.column(col, anchor="center")
+            self.sold_tree.column(col, width=column_widths[col], anchor="center")
 
         # Refresh button to update the sold cards view
         ttk.Button(sold_frame, text="Refresh", command=self.update_sold_list).pack(pady=10)
@@ -130,13 +139,17 @@ class InventoryApp:
         button_frame = ttk.Frame(full_inventory_frame)
         button_frame.pack(fill="x", padx=20, pady=10)
 
-        # Add Delete Card Button
-        ttk.Button(button_frame, text="Delete Card", command=self.delete_selected_card_full_inventory).pack(side="right",
-                                                                                                            padx=5)
-
         # Add Sell Card Button
         ttk.Button(button_frame, text="Sell Card", command=self.sell_selected_card_full_inventory).pack(side="left",
                                                                                                         padx=5)
+
+        # Add Edit Card Button
+        ttk.Button(button_frame, text="Edit Card", command=self.edit_selected_card_full_inventory).pack(side="left",
+                                                                                                        padx=5)
+
+        # Add Delete Card Button
+        ttk.Button(button_frame, text="Delete Card", command=self.delete_selected_card_full_inventory).pack(side="left",
+                                                                                                            padx=5)
 
         # Refresh button to update the inventory view
         ttk.Button(full_inventory_frame, text="Refresh", command=self.update_full_inventory).pack(pady=10)
@@ -219,6 +232,52 @@ class InventoryApp:
             self.update_full_inventory()
 
         ttk.Button(edit_window, text="Save", command=save_changes).grid(row=3, column=0, columnspan=2, pady=10)
+
+    def edit_selected_card_full_inventory(self):
+        selected_item = self.full_inventory_tree.selection()
+        if not selected_item:
+            messagebox.showerror("Error", "No card selected!")
+            return
+
+        card_id = self.full_inventory_tree.item(selected_item[0], "values")[0]
+        card = self.inventory_manager.get_card_by_id(card_id)
+
+        edit_window = tk.Toplevel(self.root)
+        edit_window.title("Edit Card")
+
+        ttk.Label(edit_window, text="Name:").grid(row=0, column=0, padx=5, pady=5)
+        name_entry = ttk.Entry(edit_window)
+        name_entry.insert(0, card["name"])
+        name_entry.grid(row=0, column=1, padx=5, pady=5)
+
+        ttk.Label(edit_window, text="Condition:").grid(row=1, column=0, padx=5, pady=5)
+        condition_entry = ttk.Entry(edit_window)
+        condition_entry.insert(0, card["condition"])
+        condition_entry.grid(row=1, column=1, padx=5, pady=5)
+
+        ttk.Label(edit_window, text="Card Number:").grid(row=2, column=0, padx=5, pady=5)
+        card_number_entry = ttk.Entry(edit_window)
+        card_number_entry.insert(0, card["card_number"])
+        card_number_entry.grid(row=2, column=1, padx=5, pady=5)
+
+        def save_changes():
+            new_name = name_entry.get().strip()
+            new_condition = condition_entry.get().strip()
+            new_card_number = card_number_entry.get().strip()
+
+            if not new_name or not new_condition or not new_card_number:
+                messagebox.showerror("Error", "All fields are required!")
+                return
+
+            self.inventory_manager.edit_card(card_id, new_name, new_condition, new_card_number)
+            self.update_full_inventory()
+            edit_window.destroy()
+
+        ttk.Button(edit_window, text="Save", command=save_changes).grid(row=3, column=0, columnspan=2, pady=10)
+
+        edit_window.transient(self.root)
+        edit_window.grab_set()
+        self.root.wait_window(edit_window)
 
     def delete_card(self):
         selected = self.inventory_list.curselection()
