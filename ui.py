@@ -57,7 +57,12 @@ class InventoryApp:
         self.card_number_entry = ttk.Entry(form_frame)
         self.card_number_entry.grid(row=2, column=1, padx=5, pady=5)
 
-        ttk.Button(form_frame, text="Add Entry", command=self.add_inventory_item).grid(row=3, column=0, columnspan=2, pady=10)
+        # New field for Buy Price
+        ttk.Label(form_frame, text="Buy Price:").grid(row=3, column=0, padx=5, pady=5)
+        self.buy_price_entry = ttk.Entry(form_frame)
+        self.buy_price_entry.grid(row=3, column=1, padx=5, pady=5)
+
+        ttk.Button(form_frame, text="ADD ENTRY", command=self.add_inventory_item).grid(row=3, column=2, columnspan=2, pady=10)
 
         # Right side of the form - Buttons for Edit, Delete, and Sell
         button_frame = ttk.Frame(form_frame)
@@ -126,7 +131,7 @@ class InventoryApp:
         ttk.Button(search_frame, text="Search", command=self.search_full_inventory).pack(side="left", padx=5)
 
         # Treeview for displaying the full inventory
-        columns = ("ID", "Name", "Condition", "Card Number", "Barcode")
+        columns = ("ID", "Name", "Condition", "Card Number", "Buy Price", "Barcode")
         self.full_inventory_tree = ttk.Treeview(full_inventory_frame, columns=columns, show="headings", height=20)
         self.full_inventory_tree.pack(fill="both", expand=True, padx=5, pady=10)
 
@@ -172,18 +177,26 @@ class InventoryApp:
         name = self.name_entry.get().strip()
         condition = self.condition_entry.get().strip()
         card_number = self.card_number_entry.get().strip()
+        buy_price = self.buy_price_entry.get().strip()
 
-        if not name or not condition or not card_number:
+        if not name or not condition or not card_number or not buy_price:
             messagebox.showerror("Error", "All fields are required!")
             return
 
-        self.inventory_manager.add_card(name, condition, card_number)
+        try:
+            buy_price = float(buy_price)
+        except ValueError:
+            messagebox.showerror("Error", "Buy Price must be a valid number!")
+            return
+
+        self.inventory_manager.add_card(name, condition, card_number, buy_price)
         self.update_inventory_list()
         self.update_full_inventory()
 
         self.name_entry.delete(0, tk.END)
         self.condition_entry.delete(0, tk.END)
         self.card_number_entry.delete(0, tk.END)
+        self.buy_price_entry.delete(0, tk.END)
 
     def search_inventory(self):
         query = self.search_inventory_entry.get().strip()
@@ -217,16 +230,28 @@ class InventoryApp:
         card_number_entry.insert(0, card["card_number"])
         card_number_entry.grid(row=2, column=1, padx=5, pady=5)
 
-        def save_changes():
-            name = name_entry.get().strip()
-            condition = condition_entry.get().strip()
-            card_number = card_number_entry.get().strip()
+        ttk.Label(edit_window, text="Buy Price:").grid(row=3, column=0, padx=5, pady=5)
+        buy_price_entry = ttk.Entry(edit_window)
+        buy_price_entry.insert(0, card["buy_price"])
+        buy_price_entry.grid(row=3, column=1, padx=5, pady=5)
 
-            if not name or not condition or not card_number:
+        def save_changes():
+            new_name = name_entry.get().strip()
+            new_condition = condition_entry.get().strip()
+            new_card_number = card_number_entry.get().strip()
+            new_buy_price = buy_price_entry.get().strip()
+
+            if not new_name or not new_condition or not new_card_number or not new_buy_price:
                 messagebox.showerror("Error", "All fields are required!")
                 return
 
-            self.inventory_manager.edit_card(card_id, name, condition, card_number)
+            try:
+                new_buy_price = float(new_buy_price)
+            except ValueError:
+                messagebox.showerror("Error", "Buy Price must be a valid number!")
+                return
+
+            self.inventory_manager.edit_card(card_id, new_name, new_condition, new_card_number, new_buy_price)
             edit_window.destroy()
             self.update_inventory_list()
             self.update_full_inventory()
@@ -366,7 +391,8 @@ class InventoryApp:
         inventory = self.inventory_manager.get_inventory()
         for card in inventory:
             self.full_inventory_tree.insert(
-                "", "end", values=(card["id"], card["name"], card["condition"], card["card_number"], card["barcode"])
+                "", "end", values=(
+                card["id"], card["name"], card["condition"], card["card_number"], card["buy_price"], card["barcode"])
             )
 
     def update_sold_list(self):
