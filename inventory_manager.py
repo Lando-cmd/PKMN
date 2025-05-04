@@ -104,3 +104,15 @@ class InventoryManager:
             return self.connection.execute("""
                 SELECT * FROM sold_cards WHERE name LIKE ? OR condition LIKE ? OR card_number LIKE ?
             """, (f"%{query}%", f"%{query}%", f"%{query}%")).fetchall()
+
+    def edit_sold_card(self, card_id, name, condition, card_number, buy_price, sell_price):
+        with self.connection:
+            self.connection.execute("""
+                UPDATE sold_cards
+                SET name = ?, condition = ?, card_number = ?, buy_price = ?, sell_price = ?
+                WHERE id = ?
+            """, (name, condition, card_number, buy_price, sell_price, card_id))
+
+    def get_sold_card_by_id(self, card_id):
+        with self.connection:
+            return self.connection.execute("SELECT * FROM sold_cards WHERE id = ?", (card_id,)).fetchone()
