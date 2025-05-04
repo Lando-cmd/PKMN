@@ -62,7 +62,8 @@ class InventoryApp:
         self.buy_price_entry = ttk.Entry(form_frame)
         self.buy_price_entry.grid(row=3, column=1, padx=5, pady=5)
 
-        ttk.Button(form_frame, text="ADD ENTRY", command=self.add_inventory_item).grid(row=3, column=2, columnspan=2, pady=10)
+        ttk.Button(form_frame, text="ADD ENTRY", command=self.add_inventory_item).grid(row=3, column=2, columnspan=2,
+                                                                                       pady=10)
 
         # Right side of the form - Buttons for Edit, Delete, and Sell
         button_frame = ttk.Frame(form_frame)
@@ -94,7 +95,7 @@ class InventoryApp:
         ttk.Button(search_frame, text="Search", command=self.search_sold_cards).pack(side="left", padx=5)
 
         # Treeview for displaying sold cards
-        columns = ("ID", "Name", "Condition", "Card Number", "Sell Price", "Date of Sale", "Barcode")
+        columns = ("ID", "Name", "Condition", "Card Number", "Buy Price", "Sell Price", "Date of Sale", "Barcode")
         self.sold_tree = ttk.Treeview(sold_frame, columns=columns, show="headings", height=20)
         self.sold_tree.pack(fill="both", expand=True, padx=10, pady=10)
 
@@ -105,6 +106,7 @@ class InventoryApp:
                 "Name": 150,
                 "Condition": 100,
                 "Card Number": 120,
+                "Buy Price": 100,
                 "Sell Price": 100,
                 "Date of Sale": 150,
                 "Barcode": 120,
@@ -114,6 +116,8 @@ class InventoryApp:
 
         # Refresh button to update the sold cards view
         ttk.Button(sold_frame, text="Refresh", command=self.update_sold_list).pack(pady=10)
+
+        ttk.Button(sold_frame, text="Edit Card", command=self.edit_sold_card).pack(side="left", padx=5)
 
     def create_full_inventory_tab(self):
         full_inventory_frame = ttk.Frame(self.notebook)
@@ -285,24 +289,72 @@ class InventoryApp:
         card_number_entry.insert(0, card["card_number"])
         card_number_entry.grid(row=2, column=1, padx=5, pady=5)
 
+    def edit_sold_card(self):
+        selected_item = self.sold_tree.selection()
+        if not selected_item:
+            messagebox.showerror("Error", "No card selected!")
+            return
+
+        card_id = self.sold_tree.item(selected_item[0], "values")[0]
+        card = self.inventory_manager.get_sold_card_by_id(card_id)
+
+        edit_window = tk.Toplevel(self.root)
+        edit_window.title("Edit Sold Card")
+
+        ttk.Label(edit_window, text="Name:").grid(row=0, column=0, padx=5, pady=5)
+        name_entry = ttk.Entry(edit_window)
+        name_entry.insert(0, card["name"])
+        name_entry.grid(row=0, column=1, padx=5, pady=5)
+
+        ttk.Label(edit_window, text="Condition:").grid(row=1, column=0, padx=5, pady=5)
+        condition_entry = ttk.Entry(edit_window)
+        condition_entry.insert(0, card["condition"])
+        condition_entry.grid(row=1, column=1, padx=5, pady=5)
+
+        ttk.Label(edit_window, text="Card Number:").grid(row=2, column=0, padx=5, pady=5)
+        card_number_entry = ttk.Entry(edit_window)
+        card_number_entry.insert(0, card["card_number"])
+        card_number_entry.grid(row=2, column=1, padx=5, pady=5)
+
+        ttk.Label(edit_window, text="Buy Price:").grid(row=3, column=0, padx=5, pady=5)
+        buy_price_entry = ttk.Entry(edit_window)
+        buy_price_entry.insert(0, card["buy_price"])
+        buy_price_entry.grid(row=3, column=1, padx=5, pady=5)
+
+        ttk.Label(edit_window, text="Sell Price:").grid(row=4, column=0, padx=5, pady=5)
+        sell_price_entry = ttk.Entry(edit_window)
+        sell_price_entry.insert(0, card["sell_price"])
+        sell_price_entry.grid(row=4, column=1, padx=5, pady=5)
+
         def save_changes():
             new_name = name_entry.get().strip()
             new_condition = condition_entry.get().strip()
             new_card_number = card_number_entry.get().strip()
+            new_buy_price = buy_price_entry.get().strip()
+            new_sell_price = sell_price_entry.get().strip()
 
-            if not new_name or not new_condition or not new_card_number:
+            if not new_name or not new_condition or not new_card_number or not new_buy_price or not new_sell_price:
                 messagebox.showerror("Error", "All fields are required!")
                 return
 
-            self.inventory_manager.edit_card(card_id, new_name, new_condition, new_card_number)
-            self.update_full_inventory()
+            try:
+                new_buy_price = float(new_buy_price)
+                new_sell_price = float(new_sell_price)
+            except ValueError:
+                messagebox.showerror("Error", "Buy Price and Sell Price must be valid numbers!")
+                return
+
+                self.inventory_manager.edit_sold_card(
+                    card_id, new_name, new_condition, new_card_number, new_buy_price, new_sell_price
+                )
             edit_window.destroy()
+            self.update_sold_list()
 
-        ttk.Button(edit_window, text="Save", command=save_changes).grid(row=3, column=0, columnspan=2, pady=10)
+            ttk.Button(edit_window, text="Save", command=save_changes).grid(row=5, column=0, columnspan=2, pady=10)
 
-        edit_window.transient(self.root)
-        edit_window.grab_set()
-        self.root.wait_window(edit_window)
+            edit_window.transient(self.root)
+            edit_window.grab_set()
+            self.root.wait_window(edit_window)
 
     def delete_card(self):
         selected = self.inventory_list.curselection()
@@ -339,7 +391,6 @@ class InventoryApp:
         if not selected_item:
             messagebox.showerror("Error", "No card selected!")
             return
-
 
         card_id = self.full_inventory_tree.item(selected_item[0], "values")[0]
         confirm = messagebox.askyesno("Confirm Deletion", "Are you sure you want to delete this item?")
@@ -392,7 +443,8 @@ class InventoryApp:
         for card in inventory:
             self.full_inventory_tree.insert(
                 "", "end", values=(
-                card["id"], card["name"], card["condition"], card["card_number"], card["buy_price"], card["barcode"])
+                    card["id"], card["name"], card["condition"], card["card_number"], card["buy_price"],
+                    card["barcode"])
             )
 
     def update_sold_list(self):
@@ -410,9 +462,10 @@ class InventoryApp:
                     card["name"],
                     card["condition"],
                     card["card_number"],
+                    card["buy_price"],  # Include Buy Price here
                     card["sell_price"],
                     card["sold_date"],
-                    card["barcode"]  # Include barcode here
+                    card["barcode"]
                 )
             )
 
