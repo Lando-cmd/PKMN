@@ -218,6 +218,7 @@ class InventoryApp:
 
         edit_window = tk.Toplevel(self.root)
         edit_window.title("Edit Card")
+        edit_window.geometry("300x200")
 
         ttk.Label(edit_window, text="Name:").grid(row=0, column=0, padx=5, pady=5)
         name_entry = ttk.Entry(edit_window)
@@ -260,7 +261,7 @@ class InventoryApp:
             self.update_inventory_list()
             self.update_full_inventory()
 
-        ttk.Button(edit_window, text="Save", command=save_changes).grid(row=3, column=0, columnspan=2, pady=10)
+        ttk.Button(edit_window, text="Save", command=save_changes).grid(row=4, column=0, columnspan=2, pady=10)
 
     def edit_selected_card_full_inventory(self):
         selected_item = self.full_inventory_tree.selection()
@@ -300,6 +301,7 @@ class InventoryApp:
 
         edit_window = tk.Toplevel(self.root)
         edit_window.title("Edit Sold Card")
+        edit_window.geometry("350x200")
 
         ttk.Label(edit_window, text="Name:").grid(row=0, column=0, padx=5, pady=5)
         name_entry = ttk.Entry(edit_window)
