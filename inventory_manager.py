@@ -31,6 +31,7 @@ class InventoryManager:
                     card_number TEXT,
                     barcode TEXT,
                     sold_date TEXT,
+                    buy_price REAL,
                     sell_price REAL
                 )
             """)
@@ -58,9 +59,11 @@ class InventoryManager:
             if card:
                 sold_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 self.connection.execute("""
-                    INSERT INTO sold_cards (name, condition, card_number, barcode, sold_date, sell_price)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """, (card['name'], card['condition'], card['card_number'], card['barcode'], sold_date, sell_price))
+                    INSERT INTO sold_cards (name, condition, card_number, barcode, sold_date, buy_price, sell_price)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                card['name'], card['condition'], card['card_number'], card['barcode'], sold_date, card['buy_price'],
+                sell_price))
                 self.connection.execute("DELETE FROM inventory WHERE id = ?", (card_id,))
 
     def get_card_by_id(self, card_id):
