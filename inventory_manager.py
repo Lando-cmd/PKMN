@@ -70,13 +70,13 @@ class InventoryManager:
         with self.connection:
             return self.connection.execute("SELECT * FROM inventory WHERE id = ?", (card_id,)).fetchone()
 
-    def edit_card(self, card_id, name, condition, card_number):
+    def edit_card(self, card_id, name, condition, card_number, buy_price):
         with self.connection:
             self.connection.execute("""
                 UPDATE inventory
-                SET name = ?, condition = ?, card_number = ?
+                SET name = ?, condition = ?, card_number = ?, buy_price = ?
                 WHERE id = ?
-            """, (name, condition, card_number, card_id))
+            """, (name, condition, card_number, buy_price, card_id))
 
     def undo_sale(self, card_id):
         with self.connection:
