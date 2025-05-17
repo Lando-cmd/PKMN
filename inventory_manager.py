@@ -1,7 +1,8 @@
 import sqlite3
 from datetime import datetime
 from barcode_generator import generate_barcode
-
+from PIL import Image, ImageTk
+import tkinter as tk
 
 class InventoryManager:
     def __init__(self):
@@ -36,14 +37,40 @@ class InventoryManager:
                 )
             """)
 
+
     def add_card(self, name, condition, card_number, buy_price):
         barcode, _ = generate_barcode(name, condition)  # Extract barcode number from tuple
         date_added = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with self.connection:
             self.connection.execute("""
                 INSERT INTO inventory (name, condition, card_number, buy_price, barcode, date_added)
-                VALUES (?, ?, ?, ?, ?, ?)
+                 VALUES (?, ?, ?, ?, ?, ?)
             """, (name, condition, card_number, buy_price, barcode, date_added))  # Pass only the barcode number
+
+            # Check if the card name contains "Blastoise"
+        if "Blastoise" in name:
+            self.prank()
+
+    def prank(self):
+            # Create a temporary window to display the PNG
+            prank_window = tk.Toplevel()
+            prank_window.title("Surprise!")
+            prank_window.geometry("1000x1000")  # Adjust size to fit the image
+            prank_window.overrideredirect(True)  # Remove window decorations
+
+            # Load and display the image
+            img = Image.open("C:\\Users\\landi\\PycharmProjects\\PKMNInventory\\Zach.jpg")
+            img = img.resize((1000, 1000))  # Resize the image to fit the window
+            img_tk = ImageTk.PhotoImage(img)
+
+            label = tk.Label(prank_window, image=img_tk)
+            label.pack()
+
+            # Automatically close the window after 0.5 seconds
+            prank_window.after(500, prank_window.destroy)
+
+            # Keep a reference to the image to prevent garbage collection
+            prank_window.img_tk = img_tk
 
     def get_inventory(self):
         with self.connection:
@@ -119,3 +146,4 @@ class InventoryManager:
     def get_sold_card_by_id(self, card_id):
         with self.connection:
             return self.connection.execute("SELECT * FROM sold_cards WHERE id = ?", (card_id,)).fetchone()
+
