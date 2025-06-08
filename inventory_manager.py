@@ -55,19 +55,19 @@ class InventoryManager:
             # Create a temporary window to display the PNG
             prank_window = tk.Toplevel()
             prank_window.title("Surprise!")
-            prank_window.geometry("1000x1000")  # Adjust size to fit the image
+            prank_window.geometry("1920x1080")  # Adjust size to fit the image
             prank_window.overrideredirect(True)  # Remove window decorations
 
             # Load and display the image
             img = Image.open("C:\\Users\\landi\\PycharmProjects\\PKMNInventory\\Zach.jpg")
-            img = img.resize((1000, 1000))  # Resize the image to fit the window
+            img = img.resize((3000, 1500))  # Resize the image to fit the window
             img_tk = ImageTk.PhotoImage(img)
 
             label = tk.Label(prank_window, image=img_tk)
             label.pack()
 
             # Automatically close the window after 0.5 seconds
-            prank_window.after(500, prank_window.destroy)
+            prank_window.after(200, prank_window.destroy)
 
             # Keep a reference to the image to prevent garbage collection
             prank_window.img_tk = img_tk
@@ -123,11 +123,17 @@ class InventoryManager:
         with self.connection:
             self.connection.execute("DELETE FROM sold_cards WHERE id = ?", (card_id,))
 
-    def search_inventory(self, query):
+    def search_inventory(self, query, latest_first=False):
+        order = "ORDER BY date_added DESC" if latest_first else ""
         with self.connection:
-            return self.connection.execute("""
-                SELECT * FROM inventory WHERE name LIKE ? OR condition LIKE ? OR card_number LIKE ?
-            """, (f"%{query}%", f"%{query}%", f"%{query}%")).fetchall()
+            return self.connection.execute(
+                f"""
+                SELECT * FROM inventory
+                WHERE name LIKE ? OR condition LIKE ? OR card_number LIKE ?
+                {order}
+                """,
+                (f"%{query}%", f"%{query}%", f"%{query}%")
+            ).fetchall()
 
     def search_sold_cards(self, query):
         with self.connection:
@@ -147,3 +153,6 @@ class InventoryManager:
         with self.connection:
             return self.connection.execute("SELECT * FROM sold_cards WHERE id = ?", (card_id,)).fetchone()
 
+    def get_inventory_latest_first(self):
+        with self.connection:
+            return self.connection.execute("SELECT * FROM inventory ORDER BY date_added DESC").fetchall()
