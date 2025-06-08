@@ -8,7 +8,7 @@ class InventoryApp:
         self.root = tk.Tk()
         self.root.title("Enterprise Inventory System")
         self.root.geometry("1000x800")
-        self.root.resizable(False, False)
+        self.root.resizable(True, True)
 
         self.inventory_manager = InventoryManager()
 
@@ -57,7 +57,6 @@ class InventoryApp:
         self.card_number_entry = ttk.Entry(form_frame)
         self.card_number_entry.grid(row=2, column=1, padx=5, pady=5)
 
-        # New field for Buy Price
         ttk.Label(form_frame, text="Buy Price:").grid(row=3, column=0, padx=5, pady=5)
         self.buy_price_entry = ttk.Entry(form_frame)
         self.buy_price_entry.grid(row=3, column=1, padx=5, pady=5)
@@ -65,19 +64,31 @@ class InventoryApp:
         ttk.Button(form_frame, text="ADD ENTRY", command=self.add_inventory_item).grid(row=3, column=2, columnspan=2,
                                                                                        pady=10)
 
-        # Right side of the form - Buttons for Edit, Delete, and Sell
         button_frame = ttk.Frame(form_frame)
         button_frame.grid(row=0, column=2, rowspan=3, padx=10, pady=5)
-
         ttk.Button(button_frame, text="Edit", command=self.edit_card).pack(fill="x", pady=5)
         ttk.Button(button_frame, text="Delete", command=self.delete_card).pack(fill="x", pady=5)
         ttk.Button(button_frame, text="Sell", command=self.sell_card).pack(fill="x", pady=5)
 
-        # Inventory List
-        list_frame = ttk.LabelFrame(inventory_frame, text="Current Inventory", padding=10)
+        # --- Replace the Listbox with a Treeview for Current Inventory ---
+        list_frame = ttk.LabelFrame(inventory_frame, text="Recent Entries", padding=10)
         list_frame.pack(fill="both", padx=20, pady=10, expand=True)
-        self.inventory_list = tk.Listbox(list_frame, font=("Courier New", 10), height=15)
-        self.inventory_list.pack(fill="both", expand=True, padx=5, pady=5)
+
+        columns = ("ID", "Name", "Condition", "Card Number", "Buy Price", "Barcode")
+        self.inventory_tree = ttk.Treeview(list_frame, columns=columns, show="headings", height=20)
+        self.inventory_tree.pack(fill="both", expand=True, padx=5, pady=5)
+
+        column_widths = {
+            "ID": 10,
+            "Name": 150,
+            "Condition": 100,
+            "Card Number": 120,
+            "Buy Price": 100,
+            "Barcode": 120,
+        }
+        for col in columns:
+            self.inventory_tree.heading(col, text=col)
+            self.inventory_tree.column(col, width=column_widths[col], anchor="center")
 
     def create_sold_tab(self):
         sold_frame = ttk.Frame(self.notebook)
@@ -178,7 +189,7 @@ class InventoryApp:
 
     def search_full_inventory(self):
         query = self.search_full_inventory_entry.get().strip()
-        results = self.inventory_manager.search_inventory(query)
+        results = self.inventory_manager.search_inventory(query, latest_first=False)
 
         # Clear the Treeview
         for item in self.full_inventory_tree.get_children():
@@ -218,16 +229,24 @@ class InventoryApp:
 
     def search_inventory(self):
         query = self.search_inventory_entry.get().strip()
-        results = self.inventory_manager.search_inventory(query)
-        self.update_listbox(self.inventory_list, results)
+        results = self.inventory_manager.search_inventory(query, latest_first=True)
+        # Clear and update the Treeview
+        for item in self.inventory_tree.get_children():
+            self.inventory_tree.delete(item)
+        for card in results:
+            self.inventory_tree.insert(
+                "", "end", values=(
+                    card["id"], card["name"], card["condition"], card["card_number"], card["buy_price"], card["barcode"]
+                )
+            )
 
     def edit_card(self):
-        selected = self.inventory_list.curselection()
-        if not selected:
+        selected_item = self.inventory_tree.selection()
+        if not selected_item:
             messagebox.showerror("Error", "No item selected!")
             return
 
-        card_id = self.get_selected_card_id(self.inventory_list, selected[0])
+        card_id = self.inventory_tree.item(selected_item[0], "values")[0]
         card = self.inventory_manager.get_card_by_id(card_id)
 
         edit_window = tk.Toplevel(self.root)
@@ -259,17 +278,14 @@ class InventoryApp:
             new_condition = condition_entry.get().strip()
             new_card_number = card_number_entry.get().strip()
             new_buy_price = buy_price_entry.get().strip()
-
             if not new_name or not new_condition or not new_card_number or not new_buy_price:
                 messagebox.showerror("Error", "All fields are required!")
                 return
-
             try:
                 new_buy_price = float(new_buy_price)
             except ValueError:
                 messagebox.showerror("Error", "Buy Price must be a valid number!")
                 return
-
             self.inventory_manager.edit_card(card_id, new_name, new_condition, new_card_number, new_buy_price)
             edit_window.destroy()
             self.update_inventory_list()
@@ -412,12 +428,12 @@ class InventoryApp:
             self.update_sold_list()
 
     def delete_card(self):
-        selected = self.inventory_list.curselection()
-        if not selected:
+        selected_item = self.inventory_tree.selection()
+        if not selected_item:
             messagebox.showerror("Error", "No item selected!")
             return
 
-        card_id = self.get_selected_card_id(self.inventory_list, selected[0])
+        card_id = self.inventory_tree.item(selected_item[0], "values")[0]
         confirm = messagebox.askyesno("Confirm Deletion", "Are you sure you want to delete this item?")
         if confirm:
             self.inventory_manager.delete_inventory_item(card_id)
@@ -425,12 +441,12 @@ class InventoryApp:
             self.update_full_inventory()
 
     def sell_card(self):
-        selected = self.inventory_list.curselection()
-        if not selected:
+        selected_item = self.inventory_tree.selection()
+        if not selected_item:
             messagebox.showerror("Error", "No item selected!")
             return
 
-        card_id = self.get_selected_card_id(self.inventory_list, selected[0])
+        card_id = self.inventory_tree.item(selected_item[0], "values")[0]
         sell_price = simpledialog.askfloat("Sell Card", "Enter sale price:")
 
         if sell_price is None:
@@ -485,8 +501,18 @@ class InventoryApp:
             )
 
     def update_inventory_list(self):
-        inventory = self.inventory_manager.get_inventory()
-        self.update_listbox(self.inventory_list, inventory)
+        # Clear the Treeview
+        for item in self.inventory_tree.get_children():
+            self.inventory_tree.delete(item)
+
+        # Populate the Treeview with inventory data
+        inventory = self.inventory_manager.get_inventory_latest_first()
+        for card in inventory:
+            self.inventory_tree.insert(
+                "", "end", values=(
+                    card["id"], card["name"], card["condition"], card["card_number"], card["buy_price"], card["barcode"]
+                )
+            )
 
     def update_full_inventory(self):
         # Clear the Treeview
