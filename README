@@ -1,0 +1,99 @@
+# PKMN Inventory Manager
+
+A desktop application for managing your Pokémon card inventory, built with Python and Tkinter.
+
+---
+
+## Features
+
+- **Card Inventory Database:**  
+  Add, edit, and delete Pokémon cards with details like name, condition, card number, buy price, and barcode.
+- **Sold Cards Tracking:**  
+  Move cards to "sold" status, track sales price and date, and view sold inventory.
+- **Barcode Generation:**  
+  Automatically generate a barcode for each new card (requires `barcode_generator.py`).
+- **Fun Easter Egg:**  
+  Add a card named "Blastoise" for a surprise!
+- **Modern GUI:**  
+  Built using Tkinter, with custom app icon and image display features.
+- **Packaged for Windows:**  
+  Distributed as a standalone `.exe`—no Python installation required.
+
+---
+
+## Installation
+
+### Prerequisites
+- For development: Python 3.11+ (with Tkinter, Pillow, and required libraries)
+- For packaged use: Download the provided `.exe` from the `dist/` folder
+
+### Setup (Development)
+1. Clone this repository:
+    ```sh
+    git clone https://github.com/Lando-cmd/PKMN.git
+    cd PKMN
+    ```
+2. Install dependencies:
+    ```sh
+    pip install pillow
+    ```
+    Tkinter is included with standard Python installations.
+3. Run the app:
+    ```sh
+    python ui.py
+    ```
+
+### Setup (Packaged EXE)
+- Download the `.exe` from the `dist/` folder and double-click to run.
+- No installation required.
+
+---
+
+## Usage
+
+- **Add New Card:**  
+  Enter card details and click "Add" to save to your inventory.
+- **Edit/Delete:**  
+  Manage your card list through the interface.
+- **Sell Card:**  
+  Mark cards as sold and record sale info.
+- **Easter Egg:**  
+  Try adding a card named "Blastoise"!
+
+---
+
+## Project Structure
+
+```
+PKMN/
+├── ui.py
+├── inventory_manager.py
+├── barcode_generator.py
+├── resource_path.py
+├── Zach.jpg         # Image for prank feature
+├── app_icon.ico     # Custom application icon
+└── ...
+```
+
+---
+
+## Legal & Licensing
+
+- This project does **not** include or redistribute any copyrighted Pokémon card images, trademarks, or brand assets.
+- All source code in this repository is © 2025 Lando-cmd. Unless otherwise stated, you may use, modify, or distribute this software for personal, non-commercial use.
+- For commercial use or redistribution, please consult the author.
+- Pokémon and related trademarks are property of Nintendo, Game Freak, and The Pokémon Company. This project is not affiliated with or endorsed by any official Pokémon entities.
+
+---
+
+## Author
+
+- [Lando-cmd](https://github.com/Lando-cmd)
+
+---
+
+## Support
+
+For issues or suggestions, please open an issue in this repository.
+
+---
