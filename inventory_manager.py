@@ -1,8 +1,6 @@
 import sqlite3
 from datetime import datetime
 from barcode_generator import generate_barcode
-from PIL import Image, ImageTk
-import tkinter as tk
 
 class InventoryManager:
     def __init__(self):
@@ -51,22 +49,29 @@ class InventoryManager:
             self.prank()
 
     def prank(self):
-        # Create a temporary window to display the PNG
+        import tkinter as tk
+        from PIL import Image, ImageTk
+        from resource_path import resource_path
+
+        # Create a window to display the PNG
         prank_window = tk.Toplevel()
         prank_window.title("Surprise!")
-        prank_window.geometry("1920x1080")  # Adjust size to fit the image
+        prank_window.geometry("1920x1080")  # You can adjust size as needed
         prank_window.overrideredirect(True)  # Remove window decorations
 
-        # Load and display the image
-        img = Image.open("C:\\Users\\landi\\PycharmProjects\\PKMNInventory\\Zach.jpg")
-        img = img.resize((3000, 1500))  # Resize the image to fit the window
+        # Use resource_path to find the image wherever the app is run
+        img_path = resource_path("Zach.jpg")  # or "Zach.jpg" if you keep JPG
+
+        img = Image.open(img_path)
+        img = img.resize((1920, 1080))  # Resize the image to fit the window
+
         img_tk = ImageTk.PhotoImage(img)
 
         label = tk.Label(prank_window, image=img_tk)
-        label.pack()
+        label.pack(expand=True, fill="both")
 
         # Automatically close the window after 0.5 seconds
-        prank_window.after(200, prank_window.destroy)
+        prank_window.after(500, prank_window.destroy)  # 500 ms = 0.5 seconds
 
         # Keep a reference to the image to prevent garbage collection
         prank_window.img_tk = img_tk
