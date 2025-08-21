@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 from inventory_manager import InventoryManager
-
+from resource_path import resource_path
 
 class InventoryApp:
     def __init__(self):
@@ -9,6 +9,7 @@ class InventoryApp:
         self.root.title("Enterprise Inventory System")
         self.root.geometry("1000x800")
         self.root.resizable(True, True)
+        self.root.iconbitmap(resource_path("app_icon.ico"))
 
         self.inventory_manager = InventoryManager()
 
@@ -44,6 +45,7 @@ class InventoryApp:
         # Bind hotkey: Ctrl+R to refresh current tab
         self.root.bind('<Control-r>', self.refresh_current_tab)
 
+
     def auto_search_barcode(self, entry_widget, search_function):
         value = entry_widget.get().strip()
         if len(value) == 12 and value.isdigit():
@@ -63,7 +65,7 @@ class InventoryApp:
         inventory_frame = ttk.Frame(self.notebook)
         self.notebook.add(inventory_frame, text="Inventory")
 
-        ttk.Label(inventory_frame, text="King's Foreskin", font=("Helvetica", 30, "bold")).pack(pady=10)
+        ttk.Label(inventory_frame, text="Goldstar Collectibles", font=("Helvetica", 30, "bold")).pack(pady=10)
 
         # Search Bar
         search_frame = ttk.Frame(inventory_frame)
