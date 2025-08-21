@@ -25,6 +25,40 @@ class InventoryApp:
         self.update_sold_list()
         self.update_full_inventory()
 
+        # Bind Enter key to search functions for all search entry widgets
+        self.search_inventory_entry.bind("<Return>", lambda event: self.search_inventory())
+        self.search_sold_entry.bind("<Return>", lambda event: self.search_sold_cards())
+        self.search_full_inventory_entry.bind("<Return>", lambda event: self.search_full_inventory())
+
+        # Bind automatic barcode search for all three search bars
+        self.search_inventory_entry.bind(
+            "<KeyRelease>", lambda event: self.auto_search_barcode(self.search_inventory_entry, self.search_inventory)
+        )
+        self.search_sold_entry.bind(
+            "<KeyRelease>", lambda event: self.auto_search_barcode(self.search_sold_entry, self.search_sold_cards)
+        )
+        self.search_full_inventory_entry.bind(
+            "<KeyRelease>", lambda event: self.auto_search_barcode(self.search_full_inventory_entry, self.search_full_inventory)
+        )
+
+        # Bind hotkey: Ctrl+R to refresh current tab
+        self.root.bind('<Control-r>', self.refresh_current_tab)
+
+    def auto_search_barcode(self, entry_widget, search_function):
+        value = entry_widget.get().strip()
+        if len(value) == 12 and value.isdigit():
+            search_function()
+
+    def refresh_current_tab(self, event=None):
+        current_tab = self.notebook.select()
+        tab_text = self.notebook.tab(current_tab, "text")
+        if tab_text == "Inventory":
+            self.update_inventory_list()
+        elif tab_text == "Sold Cards":
+            self.update_sold_list()
+        elif tab_text == "Full Inventory":
+            self.update_full_inventory()
+
     def create_inventory_tab(self):
         inventory_frame = ttk.Frame(self.notebook)
         self.notebook.add(inventory_frame, text="Inventory")
@@ -70,13 +104,19 @@ class InventoryApp:
         ttk.Button(button_frame, text="Delete", command=self.delete_card).pack(fill="x", pady=5)
         ttk.Button(button_frame, text="Sell", command=self.sell_card).pack(fill="x", pady=5)
 
-        # --- Replace the Listbox with a Treeview for Current Inventory ---
+        # --- Treeview for Current Inventory with Vertical Scrollbar only ---
         list_frame = ttk.LabelFrame(inventory_frame, text="Recent Entries", padding=10)
         list_frame.pack(fill="both", padx=20, pady=10, expand=True)
 
         columns = ("ID", "Name", "Condition", "Card Number", "Buy Price", "Barcode")
-        self.inventory_tree = ttk.Treeview(list_frame, columns=columns, show="headings", height=20)
-        self.inventory_tree.pack(fill="both", expand=True, padx=5, pady=5)
+        tree_frame = ttk.Frame(list_frame)
+        tree_frame.pack(fill="both", expand=True, padx=5, pady=5)
+
+        self.inventory_tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=20)
+        vsb_inventory = ttk.Scrollbar(tree_frame, orient="vertical", command=self.inventory_tree.yview)
+        self.inventory_tree.configure(yscrollcommand=vsb_inventory.set)
+        self.inventory_tree.pack(side="left", fill="both", expand=True)
+        vsb_inventory.pack(side="right", fill="y")
 
         column_widths = {
             "ID": 10,
@@ -105,10 +145,16 @@ class InventoryApp:
         self.search_sold_entry.pack(side="left", fill="x", expand=True, padx=5)
         ttk.Button(search_frame, text="Search", command=self.search_sold_cards).pack(side="left", padx=5)
 
-        # Treeview for displaying sold cards
+        # Treeview for displaying sold cards with Vertical Scrollbar only
         columns = ("ID", "Name", "Condition", "Card Number", "Buy Price", "Sell Price", "Date of Sale", "Barcode")
-        self.sold_tree = ttk.Treeview(sold_frame, columns=columns, show="headings", height=20)
-        self.sold_tree.pack(fill="both", expand=True, padx=10, pady=10)
+        tree_frame = ttk.Frame(sold_frame)
+        tree_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.sold_tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=20)
+        vsb_sold = ttk.Scrollbar(tree_frame, orient="vertical", command=self.sold_tree.yview)
+        self.sold_tree.configure(yscrollcommand=vsb_sold.set)
+        self.sold_tree.pack(side="left", fill="both", expand=True)
+        vsb_sold.pack(side="right", fill="y")
 
         # Define column headings and set widths
         for col in columns:
@@ -125,15 +171,13 @@ class InventoryApp:
             self.sold_tree.heading(col, text=col)
             self.sold_tree.column(col, width=column_widths[col], anchor="center")
 
-        # Refresh button to update the sold cards view
-        ttk.Button(sold_frame, text="Refresh", command=self.update_sold_list).pack(pady=10)
-
-        # Add Edit Card and Delete Card Buttons
+        # All action buttons in one row
         button_frame = ttk.Frame(sold_frame)
         button_frame.pack(fill="x", padx=20, pady=10)
 
         ttk.Button(button_frame, text="Edit Card", command=self.edit_sold_card).pack(side="left", padx=5)
         ttk.Button(button_frame, text="Delete Card", command=self.delete_sold_card).pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Refresh", command=self.update_sold_list).pack(side="left", padx=5)
 
     def create_full_inventory_tab(self):
         full_inventory_frame = ttk.Frame(self.notebook)
@@ -150,10 +194,16 @@ class InventoryApp:
         self.search_full_inventory_entry.pack(side="left", fill="x", expand=True, padx=5)
         ttk.Button(search_frame, text="Search", command=self.search_full_inventory).pack(side="left", padx=5)
 
-        # Treeview for displaying the full inventory
+        # Treeview for displaying the full inventory with Vertical Scrollbar only
         columns = ("ID", "Name", "Condition", "Card Number", "Buy Price", "Barcode")
-        self.full_inventory_tree = ttk.Treeview(full_inventory_frame, columns=columns, show="headings", height=20)
-        self.full_inventory_tree.pack(fill="both", expand=True, padx=10, pady=10)
+        tree_frame = ttk.Frame(full_inventory_frame)
+        tree_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.full_inventory_tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=20)
+        vsb_full = ttk.Scrollbar(tree_frame, orient="vertical", command=self.full_inventory_tree.yview)
+        self.full_inventory_tree.configure(yscrollcommand=vsb_full.set)
+        self.full_inventory_tree.pack(side="left", fill="both", expand=True)
+        vsb_full.pack(side="right", fill="y")
 
         # Define column headings and set widths
         for col in columns:
@@ -168,34 +218,20 @@ class InventoryApp:
             self.full_inventory_tree.heading(col, text=col)
             self.full_inventory_tree.column(col, width=column_widths[col], anchor="center")
 
-        # Button Frame for actions
+        # All action buttons in one row
         button_frame = ttk.Frame(full_inventory_frame)
         button_frame.pack(fill="x", padx=20, pady=10)
 
-        # Add Sell Card Button
-        ttk.Button(button_frame, text="Sell Card", command=self.sell_selected_card_full_inventory).pack(side="left",
-                                                                                                        padx=5)
-
-        # Add Edit Card Button
-        ttk.Button(button_frame, text="Edit Card", command=self.edit_selected_card_full_inventory).pack(side="left",
-                                                                                                        padx=5)
-
-        # Add Delete Card Button
-        ttk.Button(button_frame, text="Delete Card", command=self.delete_selected_card_full_inventory).pack(side="left",
-                                                                                                            padx=5)
-
-        # Refresh button to update the inventory view
-        ttk.Button(full_inventory_frame, text="Refresh", command=self.update_full_inventory).pack(pady=10)
+        ttk.Button(button_frame, text="Sell Card", command=self.sell_selected_card_full_inventory).pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Edit Card", command=self.edit_selected_card_full_inventory).pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Delete Card", command=self.delete_selected_card_full_inventory).pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Refresh", command=self.update_full_inventory).pack(side="left", padx=5)
 
     def search_full_inventory(self):
         query = self.search_full_inventory_entry.get().strip()
         results = self.inventory_manager.search_inventory(query, latest_first=False)
-
-        # Clear the Treeview
         for item in self.full_inventory_tree.get_children():
             self.full_inventory_tree.delete(item)
-
-        # Populate the Treeview with search results
         for card in results:
             self.full_inventory_tree.insert(
                 "", "end", values=(card["id"], card["name"], card["condition"], card["card_number"], card["buy_price"],
@@ -230,7 +266,6 @@ class InventoryApp:
     def search_inventory(self):
         query = self.search_inventory_entry.get().strip()
         results = self.inventory_manager.search_inventory(query, latest_first=True)
-        # Clear and update the Treeview
         for item in self.inventory_tree.get_children():
             self.inventory_tree.delete(item)
         for card in results:
@@ -327,7 +362,6 @@ class InventoryApp:
         buy_price_entry.insert(0, card["buy_price"])
         buy_price_entry.grid(row=3, column=1, padx=5, pady=5)
 
-        # Adding the Save button
         def save_changes():
             new_name = name_entry.get().strip()
             new_condition = condition_entry.get().strip()
@@ -484,14 +518,10 @@ class InventoryApp:
         self.update_full_inventory()
 
     def search_sold_cards(self):
-        query = self.search_sold_entry.get().strip()  # Get the search query from the entry field
-        results = self.inventory_manager.search_sold_cards(query)  # Query the InventoryManager for matching sold cards
-
-        # Clear the Treeview
+        query = self.search_sold_entry.get().strip()
+        results = self.inventory_manager.search_sold_cards(query)
         for item in self.sold_tree.get_children():
             self.sold_tree.delete(item)
-
-        # Populate the Treeview with search results
         for card in results:
             self.sold_tree.insert(
                 "", "end", values=(
@@ -501,11 +531,8 @@ class InventoryApp:
             )
 
     def update_inventory_list(self):
-        # Clear the Treeview
         for item in self.inventory_tree.get_children():
             self.inventory_tree.delete(item)
-
-        # Populate the Treeview with inventory data
         inventory = self.inventory_manager.get_inventory_latest_first()
         for card in inventory:
             self.inventory_tree.insert(
@@ -515,11 +542,8 @@ class InventoryApp:
             )
 
     def update_full_inventory(self):
-        # Clear the Treeview
         for item in self.full_inventory_tree.get_children():
             self.full_inventory_tree.delete(item)
-
-        # Populate the Treeview with inventory data
         inventory = self.inventory_manager.get_inventory()
         for card in inventory:
             self.full_inventory_tree.insert(
@@ -530,12 +554,8 @@ class InventoryApp:
 
     def update_sold_list(self):
         sold_cards = self.inventory_manager.get_sold_cards()
-
-        # Clear the Treeview
         for item in self.sold_tree.get_children():
             self.sold_tree.delete(item)
-
-        # Populate the Treeview with sold cards data
         for card in sold_cards:
             self.sold_tree.insert(
                 "", "end", values=(
@@ -543,7 +563,7 @@ class InventoryApp:
                     card["name"],
                     card["condition"],
                     card["card_number"],
-                    card["buy_price"],  # Include Buy Price here
+                    card["buy_price"],
                     card["sell_price"],
                     card["sold_date"],
                     card["barcode"]
